@@ -14,6 +14,12 @@ The code is tested with Python3, Pytorch >= 1.0 and CUDA >= 10.0, the dependenci
 * Download pre-processed InteriorNet and ScanNet, as well as their corresponding training/validation/testing txt files from [link](https://drive.google.com/drive/folders/1WdNAESqDYcUPQyXAW6PvlcdQIYlOEXIw?usp=sharing)
 * Modify the paths in train.py, test.py and txt files to match the dataset path in your machine.
 
+## Coordindate system
+Our upright and local coordindate systems are defined as follows (correspdonging to normal images in the pre-processed dataset):
+* Z upward, Y right, X backward , equivalent to
+* Roll negative -> image rotate counterclockwise, Pitch positive -> camera rotate up
+
+
 ## Training
 
 * To train the network on the InteriorNet, run 
