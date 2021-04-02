@@ -1,5 +1,6 @@
 # UprightNet
 PyTorch implementation of paper "UprightNet: Geometry-Aware Camera Orientation Estimation from Single Images", ICCV 2019
+[[Paper]](https://openaccess.thecvf.com/content_ICCV_2019/papers/Xian_UprightNet_Geometry-Aware_Camera_Orientation_Estimation_From_Single_Images_ICCV_2019_paper.pdf) 
 
 ## Dependency
 The code is tested with Python3, Pytorch >= 1.0 and CUDA >= 10.0, the dependencies includes 
