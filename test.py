@@ -19,7 +19,7 @@ root = '/'
 
 
 if opt.dataset == 'interiornet':
-	eval_list_path = root + '/phoenix/S6/wx97/interiornet/test_normal_list.txt'
+	eval_list_path = root + '/phoenix/S6/wx97/interiornet/test_interiornet_normal_list.txt'
 	eval_num_threads = 3
 	test_data_loader = CreateInteriorNetryDataLoader(opt, eval_list_path, 
 													False, EVAL_BATCH_SIZE, 
@@ -38,17 +38,6 @@ elif opt.dataset == 'scannet':
 	test_dataset = test_data_loader.load_data()
 	test_data_size = len(test_data_loader)
 	print('========================= ScanNet eval #images = %d ========='%test_data_size)
-
-
-elif opt.dataset == 'sun360':
-	eval_list_path = root + '/phoenix/S6/wx97/sun360/sun360_indoor_test_uniform_list.txt'
-	# iteration_per_epoch = train_data_size//TRAIN_BATCH_SIZE
-	eval_num_threads = 2
-
-	test_data_loader = CreateSUN360DataLoader(opt, eval_list_path, False, EVAL_BATCH_SIZE, eval_num_threads)
-	test_dataset = test_data_loader.load_data()
-	test_data_size = len(test_data_loader)
-	print('========================= sun360 eval #images = %d ========='%test_data_size)
 
 
 else:

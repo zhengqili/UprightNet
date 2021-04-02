@@ -30,8 +30,8 @@ writer = SummaryWriter(summary_name)
 
 
 if opt.dataset == 'interiornet':
-	train_list_path = root + '/phoenix/S6/wx97/interiornet/train_normal_list.txt'
-	eval_list_path = root + '/phoenix/S6/wx97/interiornet/val_normal_list.txt'
+	train_list_path = root + '/phoenix/S6/wx97/interiornet/train_interiornet_normal_list.txt'
+	eval_list_path = root + '/phoenix/S6/wx97/interiornet/val_interiornet_normal_list.txt'
 
 	train_num_threads = 3
 	train_data_loader = CreateInteriorNetryDataLoader(opt, train_list_path, 
@@ -73,6 +73,10 @@ elif opt.dataset == 'scannet':
 	test_data_size = len(test_data_loader)
 	print('========================= ScanNet eval #images = %d ========='%test_data_size)
 
+
+else:
+	print('INPUT DATASET DOES NOT EXIST!!!')
+	sys.exit()
 
 iteration_per_epoch_eval = test_data_size//EVAL_BATCH_SIZE
 

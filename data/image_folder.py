@@ -360,173 +360,173 @@ class InteriorNetRyFolder(data.Dataset):
         return len(self.img_list)
 
 
-class SUN360Folder(data.Dataset):
+# class SUN360Folder(data.Dataset):
 
-    def __init__(self, opt, list_path, is_train):
-        img_list = make_dataset(list_path)
-        if len(img_list) == 0:
-            raise(RuntimeError("Found 0 images in: " + root + "\n"
-                               "Supported image extensions are: " + ",".join(IMG_EXTENSIONS)))
-        # self.img_dir = img_dir
-        self.list_path = list_path
-        self.img_list = img_list
-        self.opt = opt
-        self.input_width = 384
-        self.input_height = 288
+#     def __init__(self, opt, list_path, is_train):
+#         img_list = make_dataset(list_path)
+#         if len(img_list) == 0:
+#             raise(RuntimeError("Found 0 images in: " + root + "\n"
+#                                "Supported image extensions are: " + ",".join(IMG_EXTENSIONS)))
+#         # self.img_dir = img_dir
+#         self.list_path = list_path
+#         self.img_list = img_list
+#         self.opt = opt
+#         self.input_width = 384
+#         self.input_height = 288
 
-        self.is_train = is_train
-        self.brightness_factor = 0.1
-        self.contrast_factor = 0.1
-        self.saturation_factor = 0.1
-        self.rot_range = 20
-        self.reshape = False
-        self.lr_threshold = 4.
+#         self.is_train = is_train
+#         self.brightness_factor = 0.1
+#         self.contrast_factor = 0.1
+#         self.saturation_factor = 0.1
+#         self.rot_range = 20
+#         self.reshape = False
+#         self.lr_threshold = 4.
 
-    def load_imgs(self, img_path, rot_path):
-        img = cv2.imread(img_path)
-
-
-        try:
-            img = img[:,:,::-1]
-        except:
-            print(img_path)
-            sys.exit()
+#     def load_imgs(self, img_path, rot_path):
+#         img = cv2.imread(img_path)
 
 
-        R_g_c = np.identity(3)
-
-        R_g_c = np.identity(3)
-
-        with open(rot_path, 'r') as f:
-            rot_row = f.readlines()
-
-            for i in range(3):
-                r1, r2, r3 = rot_row[i].split()
-                R_g_c[i, :] = np.array((np.float32(r1), np.float32(r2), np.float32(r3)))
-
-        return {'img': img,
-                'R_g_c': R_g_c}
-
-    def rotate_imgs(self, train_data, random_angle):
-        # first rotate input image
-        # then compute rotation matrix to transform camera normal
-        R_r_c = np.identity(3)
-        random_radius = - random_angle/180.0 * math.pi
-        R_r_c[0,0] = math.cos(random_radius)
-        R_r_c[0,2] = math.sin(random_radius)
-        R_r_c[2,0] = -math.sin(random_radius)
-        R_r_c[2,2] = math.cos(random_radius)
-
-        cam_normal_rot = np.dot(R_r_c, np.reshape(train_data['cam_normal'], (-1, 3)).T)
-        cam_normal_rot = np.reshape(cam_normal_rot.T, (train_data['cam_normal'].shape[0], train_data['cam_normal'].shape[1], 3))
-
-        train_data['R_g_c'] = np.dot(train_data['R_g_c'], R_r_c.T)
-
-        resize = False
-
-        train_data['img'] = rotate(train_data['img'], random_angle, order=1, resize=resize)
-        train_data['cam_normal'] = rotate(cam_normal_rot, random_angle, order=0, resize=resize)
-        train_data['upright_normal'] = rotate(train_data['upright_normal'], random_angle, order=0, resize=resize)
-        train_data['mask'] = rotate(train_data['mask'], random_angle, order=0, resize=resize)
-
-        return train_data
-
-    def resize_imgs(self, train_data, resized_width, resized_height):
-        train_data['img'] = cv2.resize(train_data['img'], (resized_width, resized_height), interpolation=cv2.INTER_AREA)
-
-        return train_data
-
-    def crop_imgs(self, train_data, start_x, start_y, crop_w, crop_h):
-        train_data['img'] = train_data['img'][start_y:start_y+crop_h, start_x:start_x+crop_w, :]
-
-        return train_data
-
-    def load_intrinsic(self, intrinsic_path):
-        intrinsic = np.identity(3)
-
-        with open(intrinsic_path, 'r') as f:
-            rot_row = f.readlines()
-
-            for i in range(3):
-                r1, r2, r3 = rot_row[i].split()
-                intrinsic[i, :] = np.array((np.float32(r1), np.float32(r2), np.float32(r3)))
-
-        return intrinsic[0, 0]/2.0, intrinsic[1, 1]/2.0
-
-    def __getitem__(self, index):
-        targets_1 = {}
-
-        img_path = self.img_list[index].rstrip()#.split()
-
-        poses_path = img_path.replace('rgb/', 'poses/').replace('.png', '_true_camera_rotation.txt')
-        intrinsic_path = img_path.replace('rgb/', 'intrinsic/').replace('.png', '_true_camera_intrinsic.txt')
-
-        train_data = self.load_imgs(img_path, poses_path)       
-        original_h, original_w = train_data['img'].shape[0], train_data['img'].shape[1]
-        fx_o, fy_o = self.load_intrinsic(intrinsic_path)
-
-        train_data = self.resize_imgs(train_data, self.input_width, self.input_height)
-
-        ratio_x = float(train_data['img'].shape[1])/float(original_w)
-        ratio_y = float(train_data['img'].shape[0])/float(original_h)
-
-        fx = fx_o * ratio_x
-        fy = fy_o * ratio_y
-
-        img_h, img_w = train_data['img'].shape[0], train_data['img'].shape[1]
-
-        img_1 = np.float32(train_data['img'])/255.0
-        mask = np.float32(np.mean(img_1, -1) > 1e-4)
-        R_g_c = train_data['R_g_c']
-
-        [gt_roll, gt_pitch, gt_yaw]= decompose_rotation(R_g_c)
-
-        gt_vfov = 2 * math.atan(float(img_h)/(2*fy))
-        gt_up_vector = R_g_c[2, :]
-
-        gt_rp = np.array([gt_roll, gt_pitch]) 
-
-        if VIZ:
-            hl_left, hl_right = getHorizonLineFromAngles(gt_pitch, gt_roll, gt_vfov, img_h, img_w)
-
-            slope = np.arctan(hl_right - hl_left)
-            midpoint = (hl_left + hl_right) / 2.0
-            offset = (midpoint - 0.5) / np.sqrt( 1 + (hl_right - hl_left)**2 )
-
-            slope_idx = np.clip(np.digitize(slope, slope_bins), 0, len(slope_bins)-1)
-            offset_idx = np.clip(np.digitize(offset, offset_bins), 0, len(offset_bins)-1)
-
-            print('%s roll %f, pitch %f, yaw %f vfov %f'%(img_path, math.degrees(gt_roll), math.degrees(gt_pitch), math.degrees(gt_yaw), math.degrees(gt_vfov)))
-
-            plt.figure(figsize=(10, 6))
-            plt.subplot(2,1,1)
-            plt.imshow(img_1) 
-            plt.subplot(2,1,2)
-            plt.imshow(mask, cmap='gray')
-
-            # plt.subplot(2,2,3)
-            # plt.imshow((cam_normal+1.)/2.0) 
-
-            # plt.subplot(2,2,4)
-            # plt.imshow((upright_normal+1.)/2.0) 
-
-            plt.savefig(img_path.split('/')[-1])
-            print('train we are good MP')
-            sys.exit()
+#         try:
+#             img = img[:,:,::-1]
+#         except:
+#             print(img_path)
+#             sys.exit()
 
 
-        final_img = torch.from_numpy(np.ascontiguousarray(img_1).transpose(2,0,1)).contiguous().float()
-        targets_1['gt_mask'] = torch.from_numpy(np.ascontiguousarray(mask)).contiguous().float()
-        targets_1['R_g_c'] = torch.from_numpy(np.ascontiguousarray(R_g_c)).contiguous().float()
-        targets_1['gt_rp'] = torch.from_numpy(np.ascontiguousarray(gt_rp)).contiguous().float()
-        targets_1['gt_up_vector'] = torch.from_numpy(np.ascontiguousarray(gt_up_vector)).contiguous().float()
-        targets_1['fx'] = torch.from_numpy(np.ascontiguousarray(fx)).contiguous().float()
-        targets_1['fy'] = torch.from_numpy(np.ascontiguousarray(fy)).contiguous().float()
-        targets_1['img_path'] = img_path
-        return final_img, targets_1
+#         R_g_c = np.identity(3)
 
-    def __len__(self):
-        return len(self.img_list)
+#         R_g_c = np.identity(3)
+
+#         with open(rot_path, 'r') as f:
+#             rot_row = f.readlines()
+
+#             for i in range(3):
+#                 r1, r2, r3 = rot_row[i].split()
+#                 R_g_c[i, :] = np.array((np.float32(r1), np.float32(r2), np.float32(r3)))
+
+#         return {'img': img,
+#                 'R_g_c': R_g_c}
+
+#     def rotate_imgs(self, train_data, random_angle):
+#         # first rotate input image
+#         # then compute rotation matrix to transform camera normal
+#         R_r_c = np.identity(3)
+#         random_radius = - random_angle/180.0 * math.pi
+#         R_r_c[0,0] = math.cos(random_radius)
+#         R_r_c[0,2] = math.sin(random_radius)
+#         R_r_c[2,0] = -math.sin(random_radius)
+#         R_r_c[2,2] = math.cos(random_radius)
+
+#         cam_normal_rot = np.dot(R_r_c, np.reshape(train_data['cam_normal'], (-1, 3)).T)
+#         cam_normal_rot = np.reshape(cam_normal_rot.T, (train_data['cam_normal'].shape[0], train_data['cam_normal'].shape[1], 3))
+
+#         train_data['R_g_c'] = np.dot(train_data['R_g_c'], R_r_c.T)
+
+#         resize = False
+
+#         train_data['img'] = rotate(train_data['img'], random_angle, order=1, resize=resize)
+#         train_data['cam_normal'] = rotate(cam_normal_rot, random_angle, order=0, resize=resize)
+#         train_data['upright_normal'] = rotate(train_data['upright_normal'], random_angle, order=0, resize=resize)
+#         train_data['mask'] = rotate(train_data['mask'], random_angle, order=0, resize=resize)
+
+#         return train_data
+
+#     def resize_imgs(self, train_data, resized_width, resized_height):
+#         train_data['img'] = cv2.resize(train_data['img'], (resized_width, resized_height), interpolation=cv2.INTER_AREA)
+
+#         return train_data
+
+#     def crop_imgs(self, train_data, start_x, start_y, crop_w, crop_h):
+#         train_data['img'] = train_data['img'][start_y:start_y+crop_h, start_x:start_x+crop_w, :]
+
+#         return train_data
+
+#     def load_intrinsic(self, intrinsic_path):
+#         intrinsic = np.identity(3)
+
+#         with open(intrinsic_path, 'r') as f:
+#             rot_row = f.readlines()
+
+#             for i in range(3):
+#                 r1, r2, r3 = rot_row[i].split()
+#                 intrinsic[i, :] = np.array((np.float32(r1), np.float32(r2), np.float32(r3)))
+
+#         return intrinsic[0, 0]/2.0, intrinsic[1, 1]/2.0
+
+#     def __getitem__(self, index):
+#         targets_1 = {}
+
+#         img_path = self.img_list[index].rstrip()#.split()
+
+#         poses_path = img_path.replace('rgb/', 'poses/').replace('.png', '_true_camera_rotation.txt')
+#         intrinsic_path = img_path.replace('rgb/', 'intrinsic/').replace('.png', '_true_camera_intrinsic.txt')
+
+#         train_data = self.load_imgs(img_path, poses_path)       
+#         original_h, original_w = train_data['img'].shape[0], train_data['img'].shape[1]
+#         fx_o, fy_o = self.load_intrinsic(intrinsic_path)
+
+#         train_data = self.resize_imgs(train_data, self.input_width, self.input_height)
+
+#         ratio_x = float(train_data['img'].shape[1])/float(original_w)
+#         ratio_y = float(train_data['img'].shape[0])/float(original_h)
+
+#         fx = fx_o * ratio_x
+#         fy = fy_o * ratio_y
+
+#         img_h, img_w = train_data['img'].shape[0], train_data['img'].shape[1]
+
+#         img_1 = np.float32(train_data['img'])/255.0
+#         mask = np.float32(np.mean(img_1, -1) > 1e-4)
+#         R_g_c = train_data['R_g_c']
+
+#         [gt_roll, gt_pitch, gt_yaw]= decompose_rotation(R_g_c)
+
+#         gt_vfov = 2 * math.atan(float(img_h)/(2*fy))
+#         gt_up_vector = R_g_c[2, :]
+
+#         gt_rp = np.array([gt_roll, gt_pitch]) 
+
+#         if VIZ:
+#             hl_left, hl_right = getHorizonLineFromAngles(gt_pitch, gt_roll, gt_vfov, img_h, img_w)
+
+#             slope = np.arctan(hl_right - hl_left)
+#             midpoint = (hl_left + hl_right) / 2.0
+#             offset = (midpoint - 0.5) / np.sqrt( 1 + (hl_right - hl_left)**2 )
+
+#             slope_idx = np.clip(np.digitize(slope, slope_bins), 0, len(slope_bins)-1)
+#             offset_idx = np.clip(np.digitize(offset, offset_bins), 0, len(offset_bins)-1)
+
+#             print('%s roll %f, pitch %f, yaw %f vfov %f'%(img_path, math.degrees(gt_roll), math.degrees(gt_pitch), math.degrees(gt_yaw), math.degrees(gt_vfov)))
+
+#             plt.figure(figsize=(10, 6))
+#             plt.subplot(2,1,1)
+#             plt.imshow(img_1) 
+#             plt.subplot(2,1,2)
+#             plt.imshow(mask, cmap='gray')
+
+#             # plt.subplot(2,2,3)
+#             # plt.imshow((cam_normal+1.)/2.0) 
+
+#             # plt.subplot(2,2,4)
+#             # plt.imshow((upright_normal+1.)/2.0) 
+
+#             plt.savefig(img_path.split('/')[-1])
+#             print('train we are good MP')
+#             sys.exit()
+
+
+#         final_img = torch.from_numpy(np.ascontiguousarray(img_1).transpose(2,0,1)).contiguous().float()
+#         targets_1['gt_mask'] = torch.from_numpy(np.ascontiguousarray(mask)).contiguous().float()
+#         targets_1['R_g_c'] = torch.from_numpy(np.ascontiguousarray(R_g_c)).contiguous().float()
+#         targets_1['gt_rp'] = torch.from_numpy(np.ascontiguousarray(gt_rp)).contiguous().float()
+#         targets_1['gt_up_vector'] = torch.from_numpy(np.ascontiguousarray(gt_up_vector)).contiguous().float()
+#         targets_1['fx'] = torch.from_numpy(np.ascontiguousarray(fx)).contiguous().float()
+#         targets_1['fy'] = torch.from_numpy(np.ascontiguousarray(fy)).contiguous().float()
+#         targets_1['img_path'] = img_path
+#         return final_img, targets_1
+
+#     def __len__(self):
+#         return len(self.img_list)
 
 
 class ScanNetFolder(data.Dataset):
