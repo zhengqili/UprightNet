@@ -15,7 +15,7 @@ The code is tested with Python3, Pytorch >= 1.0 and CUDA >= 10.0, the dependenci
 * Modify the paths in train.py, test.py and txt files to match the dataset path in your machine.
 
 ## Coordindate system
-Our upright and local coordindate systems are defined as follows (correspdonging to normal images in the pre-processed dataset):
+Our upright and local coordindate systems are defined as follows (corresponding to the normal images in the pre-processed datasets):
 * Z upward, Y right, X backward , equivalent to
 * Roll negative -> image rotate counterclockwise, Pitch positive -> camera rotate up
 
