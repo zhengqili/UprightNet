@@ -32,7 +32,7 @@ Our upright and local coordinate systems are defined as follows (corresponding t
 	python train.py --mode ResNet --dataset scannet --w_grad 0.25 --w_pose 0.5
 ```
 
-## Testing: 
+## Evaluation: 
 * Download checkpoints.zip from [link](https://drive.google.com/drive/folders/1WdNAESqDYcUPQyXAW6PvlcdQIYlOEXIw?usp=sharing), unzip it and make sure checkpoints folder is in the root directory of codebase.
 
 * To evaluate InteriorNet pretrained network on the InteriorNet testset, run
