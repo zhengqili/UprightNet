@@ -11,7 +11,7 @@ The code is tested with Python3, Pytorch >= 1.0 and CUDA >= 10.0, the dependenci
 * scipy
 
 ## Dataset
-* Download pre-processed InteriorNet and ScanNet, as well as their corresponding training/validation/testing txt files from [link](https://drive.google.com/drive/folders/1WdNAESqDYcUPQyXAW6PvlcdQIYlOEXIw?usp=sharing)
+* Download pre-processed InteriorNet and ScanNet, as well as their corresponding training/validation/testing txt files from [link](https://www.cs.cornell.edu/projects/uprightnet/prepare_dataset.zip)
 * Modify the paths in train.py, test.py and txt files to match the dataset path in your machine.
 
 ## Coordinate system
@@ -33,7 +33,7 @@ Our upright and local coordinate systems are defined as follows (corresponding t
 ```
 
 ## Evaluation: 
-* Download checkpoints.zip from [link](https://drive.google.com/drive/folders/1WdNAESqDYcUPQyXAW6PvlcdQIYlOEXIw?usp=sharing), unzip it and make sure checkpoints folder is in the root directory of codebase.
+* Download checkpoints.zip from [link](https://www.cs.cornell.edu/projects/uprightnet/checkpoints.zip), unzip it and make sure checkpoints folder is in the root directory of codebase.
 
 * To evaluate InteriorNet pretrained network on the InteriorNet testset, run
 ```bash
